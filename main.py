@@ -135,7 +135,7 @@ class WhiteListPlugin(Star):
             yield event.plain_result(f"当前白名单:\n{whitelist_str}")
             print(f"[WhiteListPlugin] 当前白名单:\n{whitelist_str}")
 
-    @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE)
+    @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE, priority=100)
     async def message_check(self, event: AstrMessageEvent):
         """群消息过滤：仅允许白名单用户的群聊消息继续传播，其他消息停止传播。"""
         # 如果白名单为空，则允许所有群聊消息通过（保持向后兼容）
