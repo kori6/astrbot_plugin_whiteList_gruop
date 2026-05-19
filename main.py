@@ -45,7 +45,15 @@ class WhiteListPlugin(Star):
 
     def _is_group_command_sender_whitelisted(self, event: AstrMessageEvent) -> bool:
         """仅允许群聊中的白名单用户执行命令，私聊正常处理。"""
-        if not event.is_group_chat():
+        if getattr(event, "is_group_chat", None) is not None:
+            if not event.is_group_chat():
+                return True
+
+        # 兼容没有 is_group_chat() 的事件类型，比如 AiocqhttpMessageEvent
+        group_id = getattr(event, "group_id", None)
+        if not group_id:
+            group_id = getattr(getattr(event, "message_obj", None), "group_id", None)
+        if not group_id:
             return True
 
         sender_id = event.get_sender_id()
