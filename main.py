@@ -27,7 +27,7 @@ class WhiteListPlugin(Star):
             try:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                    self.whitelist = set(data.get('whitelist', []))
+                    self.whitelist = {str(item) for item in data.get('whitelist', [])}
                     logger.info(f"已从配置文件加载白名单: {self.config_file}")
                     print(f"[WhiteListPlugin] 从{self.config_file}加载白名单: {self.whitelist}")
             except Exception as e:
@@ -67,7 +67,7 @@ class WhiteListPlugin(Star):
         if not group_id:
             return True
 
-        sender_id = event.get_sender_id()
+        sender_id = str(event.get_sender_id())
         in_whitelist = sender_id in self.whitelist
         logger.debug(f"检查用户 {sender_id} 是否在白名单: {in_whitelist}")
         print(f"[WhiteListPlugin] 检查用户 {sender_id} 是否在白名单: {in_whitelist}")
@@ -85,7 +85,7 @@ class WhiteListPlugin(Star):
             yield event.plain_result("用法: /whitelist_add <用户ID>")
             return
         
-        user_id = parts[1]
+        user_id = str(parts[1])
         sender = event.get_sender_id()
         logger.info(f"用户 {sender} 请求添加 {user_id} 到白名单")
         print(f"[WhiteListPlugin] 用户 {sender} 请求添加 {user_id} 到白名单")
@@ -107,7 +107,7 @@ class WhiteListPlugin(Star):
             yield event.plain_result("用法: /whitelist_remove <用户ID>")
             return
         
-        user_id = parts[1]
+        user_id = str(parts[1])
         sender = event.get_sender_id()
         logger.info(f"用户 {sender} 请求从白名单移除 {user_id}")
         print(f"[WhiteListPlugin] 用户 {sender} 请求从白名单移除 {user_id}")
@@ -142,7 +142,7 @@ class WhiteListPlugin(Star):
         if not self.whitelist:
             return
 
-        sender_id = event.get_sender_id()
+        sender_id = str(event.get_sender_id())
         if sender_id in self.whitelist:
             return
 
