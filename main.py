@@ -39,9 +39,21 @@ class WhiteListPlugin(Star):
         except Exception as e:
             logger.error(f"保存白名单配置失败: {e}")
 
+    def _is_group_command_sender_whitelisted(self, event: AstrMessageEvent) -> bool:
+        """仅允许群聊中的白名单用户执行命令，私聊正常处理。"""
+        if not event.is_group_chat():
+            return True
+
+        sender_id = event.get_sender_id()
+        return sender_id in self.whitelist
+
     @filter.command("whitelist_add")
     async def whitelist_add(self, event: AstrMessageEvent):
         """添加用户到白名单"""
+        if not self._is_group_command_sender_whitelisted(event):
+            yield event.plain_result("你不在白名单中，无法使用此命令")
+            return
+
         parts = event.message_str.strip().split()
         if len(parts) < 2:
             yield event.plain_result("用法: /whitelist_add <用户ID>")
@@ -55,6 +67,10 @@ class WhiteListPlugin(Star):
     @filter.command("whitelist_remove")
     async def whitelist_remove(self, event: AstrMessageEvent):
         """从白名单移除用户"""
+        if not self._is_group_command_sender_whitelisted(event):
+            yield event.plain_result("你不在白名单中，无法使用此命令")
+            return
+
         parts = event.message_str.strip().split()
         if len(parts) < 2:
             yield event.plain_result("用法: /whitelist_remove <用户ID>")
@@ -68,33 +84,15 @@ class WhiteListPlugin(Star):
     @filter.command("whitelist_list")
     async def whitelist_list(self, event: AstrMessageEvent):
         """查看当前白名单"""
+        if not self._is_group_command_sender_whitelisted(event):
+            yield event.plain_result("你不在白名单中，无法使用此命令")
+            return
+
         if not self.whitelist:
             yield event.plain_result("白名单为空")
         else:
             whitelist_str = "\n".join(self.whitelist)
             yield event.plain_result(f"当前白名单:\n{whitelist_str}")
-
-    @filter.message_preprocessor()
-    async def message_check(self, event: AstrMessageEvent):
-        """消息预处理：检查白名单"""
-        # 如果是私聊，直接通过
-        if not event.is_group_chat():
-            return
-        
-        # 如果白名单为空，允许所有消息通过
-        if not self.whitelist:
-            return
-        
-        # 获取发送者ID
-        sender_id = event.get_sender_id()
-        
-        # 如果发送者在白名单中，允许通过
-        if sender_id in self.whitelist:
-            return
-        
-        # 如果发送者不在白名单中，阻止消息
-        logger.debug(f"用户 {sender_id} 不在白名单中，消息已被过滤")
-        event.stop_propagation()
 
     async def terminate(self):
         """插件销毁"""
