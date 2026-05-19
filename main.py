@@ -9,7 +9,11 @@ class WhiteListPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
         self.whitelist = set()
-        self.config_file = Path(context.plugin_dir) / "whitelist_config.json"
+        plugin_dir = getattr(context, "plugin_dir", None)
+        if plugin_dir:
+            self.config_file = Path(plugin_dir) / "whitelist_config.json"
+        else:
+            self.config_file = Path(__file__).resolve().parent / "whitelist_config.json"
 
     async def initialize(self):
         """插件初始化，加载白名单配置"""
