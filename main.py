@@ -135,20 +135,10 @@ class WhiteListPlugin(Star):
             yield event.plain_result(f"当前白名单:\n{whitelist_str}")
             print(f"[WhiteListPlugin] 当前白名单:\n{whitelist_str}")
 
-    @filter.message_preprocessor()
+    @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE)
     async def message_check(self, event: AstrMessageEvent):
-        """消息预处理：群聊中仅允许白名单用户的消息通过，其他消息停止传播。"""
-        # 优先判定是否为群聊，私聊直接放行
-        try:
-            if not event.is_group_chat():
-                return
-        except Exception:
-            # 某些平台事件可能没有 is_group_chat 方法，尝试检查 group_id
-            group_id = getattr(event, "group_id", None) or getattr(getattr(event, "message_obj", None), "group_id", None)
-            if not group_id:
-                return
-
-        # 如果白名单为空，则允许所有消息通过（保持向后兼容）
+        """群消息过滤：仅允许白名单用户的群聊消息继续传播，其他消息停止传播。"""
+        # 如果白名单为空，则允许所有群聊消息通过（保持向后兼容）
         if not self.whitelist:
             return
 
@@ -160,9 +150,9 @@ class WhiteListPlugin(Star):
         print(f"[WhiteListPlugin] 阻止来自非白名单用户 {sender_id} 的群消息")
         # 停止事件继续传播，防止机器人回应
         try:
-            event.stop_propagation()
+            event.stop_event()
         except Exception:
-            # 如果没有 stop_propagation，尝试返回停止结果（兼容性处理）
+            # 如果没有 stop_event，尝试返回停止结果（兼容性处理）
             try:
                 return MessageEventResult.STOP
             except Exception:
